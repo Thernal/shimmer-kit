@@ -1,0 +1,76 @@
+# Why shimmer-kit has the shape it has
+
+## The real layout is the placeholder
+
+A skeleton screen drawn separately — grey boxes laid out to look like the screen — is a second layout to
+keep in step with the first, and it drifts the moment a row gains a line. Here the screen's own elements carry
+`Modifier.shimmer()`: while loading, each draws the effect in its own bounds instead of its content, and the
+content fades in when loading ends. The data the elements show while loading is filler (an empty or sample
+model); its sizes are what the placeholder takes.
+
+So the placeholder hides its content's semantics too: a screen reader would otherwise read the filler.
+Announcing "loading" once is the app's job, in its own words — the kit carries no string.
+
+## One cycle, chosen per element
+
+Placeholders that each animate on their own drift apart and look restless; a list should move as one. The
+host runs a single infinite transition and every synced placeholder reads it, so a screen of fifty
+placeholders is one animation. Two other clocks are values, not modules — they add no dependency:
+
+- `Staggered(index)` shifts the host's progress by `index × step`: a wave rolling down a list, still one
+  animation.
+- `PerItem` starts a transition of the element's own when it appears — for content that arrives piece by
+  piece, where a shared phase would look wrong.
+
+Act2Act chose between "global" and "own" implicitly: a placeholder whose duration or delay differed from the
+default silently got a transition of its own. Changing a speed therefore also broke the sync, with nothing at
+the call site to say so. The clock is now explicit; the duration is the style's.
+
+## The effect is a value behind a contract
+
+Act2Act's renderer was one effect — the sweep band — with its parameters (band width, tilt, sharpness) on
+the config every call site carries. Now `ShimmerEffect` is the seam:
+
+- `prepare(area, style, density, layoutDirection)` runs when the size, style, effect or density changes and
+  returns a `ShimmerPaint`; `brushAt(progress)` runs every frame and is arithmetic. The band's geometry and
+  colour stops are computed once, not per frame.
+- The draw node owns everything effect-independent — the inset area, the clip to the style's shape, the
+  fade between placeholder and content, the overlay mode — so an effect is only a brush.
+- Effects are `data class`es: equal effects are not re-prepared, and an effect's parameters live on the effect
+  (`SweepShimmerEffect(widthFraction, tiltDegrees, sharpness)`), not on every placeholder's config.
+
+Each effect is its own module and a **feature** in `kit.yml`: an app takes `sweep` (the default), `glow`, both,
+or neither. The api never names an effect, so leaving one out cannot break the build, and
+`scripts/check-features.sh` proves it. Without any effect, `PlainShimmerEffect` — the base colour, still — is
+what placeholders draw: previews and tests need nothing installed.
+
+## The look is the app's tokens
+
+`ShimmerStyle` holds what every effect shares — base and highlight colour, shape, padding, cycle and fade
+durations — with neutral defaults. Act2Act read its design system (`DsTheme`) straight from the defaults; a
+kit cannot, so the app maps its tokens onto `ShimmerStyle` in one file of its own and passes it to the host.
+
+## Calm by default
+
+`ShimmerHost(isAnimated = …)` stands every placeholder still — the style's colours at mid-cycle — and its
+default follows the platform: iOS's Reduce Motion, Android's "Remove animations" (animator scale 0). A still
+host also stands per-item clocks still.
+
+## What changed from Act2Act
+
+| Act2Act | shimmer-kit |
+|---|---|
+| `ShimmerProgressProvider`, a `ComposableProvider` in the app's root list | `ShimmerHost(effect, style)` — a plain composable |
+| `ShimmerDefaults` read `DsTheme` | `ShimmerStyle`, mapped by the app |
+| band width, tilt, sharpness, colours, timings on `ShimmerConfig` | effect parameters on `SweepShimmerEffect`; colours and timings on `ShimmerStyle` |
+| `asOverlay` | `isOverlay` |
+| own transition when duration or delay differed | `clock = ShimmerClock.PerItem`, explicitly; `Staggered` added |
+| per-element `delayMillis` | `ShimmerClock.Staggered(index, stepFraction)` |
+| the sweep only | the `ShimmerEffect` contract; `sweep` and `glow` as features, `PlainShimmerEffect` without either |
+| the band always left to right | the band follows the layout direction |
+| semantics of the filler kept | hidden while loading |
+| always animated | still under reduce motion |
+
+The draw node, its cache, the fade between placeholder and content, the overlay mode (`SrcAtop` over the
+content's own pixels) and the first-frame trick (the host shows a third of the cycle until its transition
+runs, so the first frame is never an empty base colour) are Act2Act's, moved behind the contract.
