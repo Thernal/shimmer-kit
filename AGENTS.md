@@ -2,7 +2,7 @@
 
 shimmer-kit is a **kit**: reusable Compose Multiplatform code that applications copy — renamed into their own
 package — with `skillctl.sh kit install shimmer-kit` (the skill-manager skill, `Thernal/knowledge`), and later
-merge changes from with `kit update`. What they copy is listed in `kit.yml`: the module `shimmer/api`, and the effects `shimmer/sweep` and `shimmer/glow`, which
+merge changes from with `kit update`. What they copy is listed in `kit.yml`: the modules `shimmer/api`, `shimmer/impl`, `shimmer/wiring`, and the effects `shimmer/sweep` and `shimmer/glow`, which
 are **features** an app takes or leaves by name.
 Everything committed to `main` reaches every app that takes the next update, so this file's first rule is
 about delivery.
@@ -28,9 +28,13 @@ about delivery.
   kit's name out of any string an install does not rename.
 - **No Material.** The kit's modules use Compose runtime, foundation, ui and animation-core; only the
   sample may use Material.
-- **Features are referenced by nothing outside them.** `shimmer/api` never imports an effect module, and no
-  effect imports another: an app that leaves one out must still build. The api's own fallback
-  (`PlainShimmerEffect`) is what a placeholder draws without any. A new effect is a new module under
+- **Contracts in `api`, work in `impl`.** `ShimmerHost` and `Modifier.shimmer` are thin calls to a renderer from
+  a CompositionLocal whose default previews them; `impl` implements `ShimmerHostRenderer` and `ShimmerRenderer`
+  (the transition, reduce motion, the draw node, the fade, the clocks); `wiring` contributes them
+  (Metro `Set<ProvidedValue<*>>`) and holds binding containers only. Nothing in `api` imports `impl`.
+- **Features are referenced by nothing outside them.** `api`, `impl` and `wiring` never import an effect module,
+  an effect depends on `api` alone, and no effect imports another: an app that leaves one out must still build.
+  The api's own fallback (`PlainShimmerEffect`) is what a placeholder draws without any. A new effect is a new module under
   `shimmer/`, a `feature:` line in `kit.yml` (not `default` — apps that never asked for it keep not having it),
   and `scripts/check-features.sh` proves it can be left out.
 - **An effect is a value** (`data class`/`data object`): the draw node re-prepares only when it changes. What
@@ -41,8 +45,8 @@ about delivery.
 - **Clocks and behaviour switches are config, not features.** Synced, per-item and staggered progress add no
   dependency, so they are `ShimmerClock` values in `api`, not modules.
 - **The kit carries no copy.** No string reaches the user; announcing "loading" is the app's.
-- `api` code lives in `presentation` packages (the kit's own Detekt rules); below it, packages are named by
-  part (`host`, `config`, `render`…). Effects live in their module's `presentation` package.
+- `api`/`impl` code lives in `presentation` packages (the kit's own Detekt rules); below it, packages are named
+  by part (`host`, `config`, `render`…). Effects live in their module's `presentation` package.
 - Kotlin nests block comments: never write `/*` inside KDoc.
 - Every module that changes what apps copy updates `kit.yml` in the same change: `code`, `feature`,
   `surface`, `requires`.

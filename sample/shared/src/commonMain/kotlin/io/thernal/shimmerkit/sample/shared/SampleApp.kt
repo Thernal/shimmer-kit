@@ -15,6 +15,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,23 +32,27 @@ import io.thernal.shimmerkit.shimmer.glow.presentation.GlowShimmerEffect
 import io.thernal.shimmerkit.shimmer.sweep.presentation.SweepShimmerEffect
 
 /**
- * The sample's root, as an application's root would be: one [ShimmerHost] with the app's effect and style, then
- * the screen. Material is the sample's own UI kit; the placeholders do not use it.
+ * The sample's root, as an application's root would be: the graph's composition locals installed in one spread
+ * — without them no placeholder is drawn — then one [ShimmerHost] with the app's effect and style, then the
+ * screen. Material is the sample's own UI kit; the placeholders do not use it.
  */
 @Composable
 fun SampleApp() {
+    val graph = remember { createSampleGraph() }
     var effect by remember { mutableStateOf(SampleEffect.Sweep) }
 
-    MaterialTheme {
-        ShimmerHost(
-            effect = effect.value,
-            style = sampleShimmerStyle(),
-        ) {
-            Surface(modifier = Modifier.fillMaxSize()) {
-                SampleScreen(
-                    effect = effect,
-                    onEffect = { effect = it },
-                )
+    CompositionLocalProvider(values = graph.providedValues.toTypedArray()) {
+        MaterialTheme {
+            ShimmerHost(
+                effect = effect.value,
+                style = sampleShimmerStyle(),
+            ) {
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    SampleScreen(
+                        effect = effect,
+                        onEffect = { effect = it },
+                    )
+                }
             }
         }
     }

@@ -1,6 +1,6 @@
 ---
 name: shimmer-kit
-description: Writes, reviews and debugs loading placeholders in Compose Multiplatform apps that use shimmer-kit (packages io.thernal.shimmerkit.shimmer.*; Modifier.shimmer, ShimmerLayout, ShimmerConfig, ShimmerHost, ShimmerClock, ShimmerStyle, ShimmerEffect, SweepShimmerEffect, GlowShimmerEffect, PlainShimmerEffect). Use it for any loading state, skeleton screen, placeholder or shimmer in such a project, even when the kit is not named — a list or profile that loads, an icon that pulses while waiting, a wave down a list, placeholders in the app's colours, a placeholder that is square around a round avatar, one that never animates or never goes away, previews and UI tests of loading screens. Not for projects without shimmer-kit, or progress indicators and spinners.
+description: Writes, reviews and debugs loading placeholders in Compose Multiplatform apps that use shimmer-kit (packages io.thernal.shimmerkit.shimmer.*; Modifier.shimmer, ShimmerLayout, ShimmerConfig, ShimmerHost, ShimmerClock, ShimmerStyle, ShimmerEffect, SweepShimmerEffect, GlowShimmerEffect, PlainShimmerEffect). Use it for any loading state, skeleton screen, placeholder or shimmer in such a project, even when the kit is not named — a list or profile that loads, an icon that pulses while waiting, a wave down a list, placeholders in the app's colours, a placeholder that is square around a round avatar, one that never shows, never animates or never goes away, previews and UI tests of loading screens. Not for projects without shimmer-kit, or progress indicators and spinners.
 ---
 
 # shimmer-kit
@@ -13,11 +13,12 @@ whether the screen is loading, one `ShimmerHost` at the root. Guide: https://git
 
 ```sh
 grep -rn --include=*.kt "ShimmerHost(" .                                # the root: effect and style
+grep -rn --include=*.kt -e "providedValues" -e "LocalShimmerRenderer" . # the root: the renderers installed
 grep -rn --include=*.kt -e "ShimmerStyle(" -e "ShimmerLayout(" . | head  # token mapping, loading screens to copy
 grep -n -A3 '^\[shimmer-kit\]' kits.lock; grep -n '^features' kits.lock  # taken as a kit? which effects?
 ```
 
-No host → add one at the root (§4). A `kits.lock` naming `shimmer-kit` means the modules were copied renamed
+No host or no renderers → add them at the root (§4). A `kits.lock` naming `shimmer-kit` means the modules were copied renamed
 with skill-manager — this skill too. `features =` says which effects the app has: **an effect not listed is
 not in the app** — `skillctl.sh kit select shimmer-kit --with glow` takes it (ask first); never copy it in
 by hand.
@@ -55,8 +56,12 @@ by hand.
 ## 4. Setup
 
 ```kotlin
-// root
-ShimmerHost(effect = SweepShimmerEffect(), style = appShimmerStyle()) { App() }
+// root — the graph's locals hold the renderers shimmer/wiring contributes
+CompositionLocalProvider(values = graph.providedValues.toTypedArray()) {
+    ShimmerHost(effect = SweepShimmerEffect(), style = appShimmerStyle()) { App() }
+}
+// without Metro, the two by hand, above the host:
+// LocalShimmerHostRenderer provides ShimmerHostRendererImpl(), LocalShimmerRenderer provides ShimmerRendererImpl()
 
 // design system — the one mapping file
 fun appShimmerStyle(): ShimmerStyle = ShimmerStyle(
@@ -65,13 +70,15 @@ fun appShimmerStyle(): ShimmerStyle = ShimmerStyle(
 )
 ```
 
-Build: modules `…:shimmer:api` and the effect modules the app took (`…:shimmer:sweep`, `…:shimmer:glow`),
-each declared by the module that uses it (no `api(...)` re-exports).
+Build: a screen's module declares `…:shimmer:api` and the effect it names; the root's declares `…:shimmer:api`,
+`…:shimmer:impl` and `…:shimmer:wiring` as well (no `api(...)` re-exports). Effect modules exist only if taken
+(`…:shimmer:sweep`, `…:shimmer:glow`).
 
 ## 5. When it misbehaves
 
 | Symptom | Cause |
 |---|---|
+| no placeholder at all, the filler shows | the renderers are not installed above (§4) — a preview hides this: it fills in the base colour regardless |
 | placeholders are a flat colour that never moves | no `ShimmerHost` above (or `isAnimated = false`, or the device's reduce motion / "Remove animations") |
 | square placeholder around a round avatar | the style's shape is used — `style = it.style?.copy(shape = CircleShape)` |
 | the background shows through the placeholder / only part is covered | `Modifier.shimmer()` placed after `background`/`clip` — move it first |

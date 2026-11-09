@@ -1,5 +1,20 @@
 # Why shimmer-kit has the shape it has
 
+## Contracts in `api`, work in `impl`
+
+A screen names `api` alone: `ShimmerHost`, `ShimmerLayout`, `ShimmerConfig`, the style, clock and effect values,
+and `Modifier.shimmer`. The two composable entries are thin calls to a renderer from a CompositionLocal —
+`ShimmerHostRenderer`, `ShimmerRenderer` — the shape overlay-kit, paging-kit and nav-kit have. `impl` holds the
+work: the transition, reduce motion, the draw node, the fade and the clocks. `wiring` contributes the renderers
+to the graph's `Set<ProvidedValue<*>>`; `api` and `impl` name no injection framework, so an app without Metro
+provides the two locals by hand. An effect depends on `api` only: it is a brush, and knows nothing of the node
+that paints it.
+
+A renderer's default previews it. In a preview a placeholder is a still fill in the base colour and the host
+just shows its content. Outside a preview, a missing installation changes nothing about the element: the filler
+showing through gives it away, where a still fill would pass for an installation that only forgot to animate.
+The host never hides its content, since the whole screen sits under it.
+
 ## The real layout is the placeholder
 
 A skeleton screen drawn separately — grey boxes laid out to look like the screen — is a second layout to
@@ -42,7 +57,7 @@ the config every call site carries. Now `ShimmerEffect` is the seam:
 Each effect is its own module and a **feature** in `kit.yml`: an app takes `sweep` (the default), `glow`, both,
 or neither. The api never names an effect, so leaving one out cannot break the build, and
 `scripts/check-features.sh` proves it. Without any effect, `PlainShimmerEffect` — the base colour, still — is
-what placeholders draw: previews and tests need nothing installed.
+what placeholders draw.
 
 ## The look is the app's tokens
 
@@ -52,15 +67,16 @@ kit cannot, so the app maps its tokens onto `ShimmerStyle` in one file of its ow
 
 ## Calm by default
 
-`ShimmerHost(isAnimated = …)` stands every placeholder still — the style's colours at mid-cycle — and its
-default follows the platform: iOS's Reduce Motion, Android's "Remove animations" (animator scale 0). A still
-host also stands per-item clocks still.
+`ShimmerHost(isAnimated = false)` stands every placeholder still — the style's colours at mid-cycle — and so does
+the platform, whatever `isAnimated` says: iOS's Reduce Motion, Android's "Remove animations" (animator scale 0).
+The platform's setting is read in `impl`, and the app has no way to overrule it: a user who asked for less motion
+is not an app's to argue with. A still host also stands per-item clocks still.
 
 ## What changed from Act2Act
 
 | Act2Act | shimmer-kit |
 |---|---|
-| `ShimmerProgressProvider`, a `ComposableProvider` in the app's root list | `ShimmerHost(effect, style)` — a plain composable |
+| `ShimmerProgressProvider`, a `ComposableProvider` in the app's root list | `ShimmerHost(effect, style)` — a plain composable; the app's root list gets the renderers |
 | `ShimmerDefaults` read `DsTheme` | `ShimmerStyle`, mapped by the app |
 | band width, tilt, sharpness, colours, timings on `ShimmerConfig` | effect parameters on `SweepShimmerEffect`; colours and timings on `ShimmerStyle` |
 | `asOverlay` | `isOverlay` |
@@ -70,6 +86,7 @@ host also stands per-item clocks still.
 | the band always left to right | the band follows the layout direction |
 | semantics of the filler kept | hidden while loading |
 | always animated | still under reduce motion |
+| one module with the draw code beside the modifier | `api` / `impl` / `wiring`, as the other kits |
 
 The draw node, its cache, the fade between placeholder and content, the overlay mode (`SrcAtop` over the
 content's own pixels) and the first-frame trick (the host shows a third of the cycle until its transition

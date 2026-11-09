@@ -1,13 +1,14 @@
 # Using shimmer-kit
 
 Packages: `io.thernal.shimmerkit.shimmer.api.presentation.*` (renamed in an app that took the kit), the effects
-in `….shimmer.sweep.presentation` and `….shimmer.glow.presentation`.
+in `….shimmer.sweep.presentation` and `….shimmer.glow.presentation`. A screen depends on `api` and names nothing
+else; `impl` and `wiring` are the root's.
 
 ## Which tool do I need
 
 | I want | Use |
 |---|---|
-| placeholders anywhere in the app | `ShimmerHost(effect, style)` once at the root |
+| placeholders anywhere in the app | the renderers installed at the root, then `ShimmerHost(effect, style)` once |
 | a screen's elements to be placeholders while it loads | `ShimmerLayout(isEnabled = isLoading) { … }` + `Modifier.shimmer()` on each element |
 | an icon or text to shimmer inside its own shape, still visible | `Modifier.shimmer { it.copy(isOverlay = true) }` |
 | a round placeholder for a round element | `Modifier.shimmer { it.copy(style = it.style?.copy(shape = CircleShape)) }` |
@@ -20,19 +21,33 @@ in `….shimmer.sweep.presentation` and `….shimmer.glow.presentation`.
 ## The root
 
 ```kotlin
-ShimmerHost(
-    effect = SweepShimmerEffect(),
-    style = appShimmerStyle(),
-) {
-    App()
+CompositionLocalProvider(values = graph.providedValues.toTypedArray()) {  // shimmer/wiring contributes the renderers
+    ShimmerHost(
+        effect = SweepShimmerEffect(),
+        style = appShimmerStyle(),
+    ) {
+        App()
+    }
 }
 ```
 
-Compose it once, above everything that shimmers. It runs the one cycle synced placeholders follow and gives
-every placeholder the effect and style its config does not name. Without a host, placeholders still draw —
-`PlainShimmerEffect`, the default style, standing still — which is what a preview gets.
+Without Metro, provide the two renderers by hand, above the host:
 
-`isAnimated` (default: not the platform's reduce-motion setting) stands every placeholder still when false.
+```kotlin
+CompositionLocalProvider(
+    LocalShimmerHostRenderer provides ShimmerHostRendererImpl(),
+    LocalShimmerRenderer provides ShimmerRendererImpl(),
+) { … }
+```
+
+Without the renderers no placeholder is drawn outside a preview, and the elements show their filler.
+
+Compose the host once, above everything that shimmers. It runs the one cycle synced placeholders follow and gives
+every placeholder the effect and style its config does not name. With the renderers but no host, placeholders
+still draw — `PlainShimmerEffect`, the default style, standing still.
+
+`isAnimated = false` stands every placeholder still; so does the platform's reduce-motion setting, whatever
+`isAnimated` says.
 
 ## A loading screen
 
@@ -127,5 +142,7 @@ Make it a `data class` (or `data object`): placeholders re-prepare only when the
 
 ## Previews and tests
 
-In a preview (`LocalInspectionMode`), placeholders stand still at mid-cycle with no host needed. In UI tests,
-an animating host keeps the clock busy: wrap the screen in `ShimmerHost(effect = …, isAnimated = false)`.
+In a preview (`LocalInspectionMode`), placeholders stand still with nothing installed: a fill in the base colour,
+or mid-cycle in the host's effect when the renderers are there. In UI tests, an animating host keeps the clock
+busy: wrap the screen in `ShimmerHost(effect = …, isAnimated = false)`. A test with no renderers sees the real
+elements and their filler.

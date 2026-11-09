@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.shimmerkit.compose)
+    alias(libs.plugins.shimmerkit.injection)
 }
 
 kotlin {
@@ -16,6 +17,8 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(projects.shimmer.api)
+                implementation(projects.shimmer.impl)
+                implementation(projects.shimmer.wiring)
                 implementation(projects.shimmer.sweep)
                 implementation(projects.shimmer.glow)
                 implementation(libs.compose.material3)

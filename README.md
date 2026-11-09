@@ -5,7 +5,7 @@ turned on and off by a `ShimmerLayout` around it, drawn by one host at the app's
 Material.
 
 ```kotlin
-// once, at the root
+// once, at the root, inside the composition locals the app's graph provides (the kit's renderers among them)
 ShimmerHost(effect = SweepShimmerEffect(), style = appShimmerStyle()) { App() }
 
 // a screen
@@ -24,7 +24,7 @@ ShimmerLayout(isEnabled = state.isLoading) {
   when it appears) or `Staggered(index)` (the host's cycle shifted along a list — still one animation).
 - **The effect is a value.** `SweepShimmerEffect` (a tilted band travelling across) and `GlowShimmerEffect`
   (a highlight breathing from the centre) are the kit's; an app may write its own `ShimmerEffect`. Without
-  any, placeholders are a still fill in the base colour — previews and tests need nothing installed.
+  any, placeholders are a still fill in the base colour; in a preview that holds with `impl` not installed either.
 - **The look is the app's.** `ShimmerStyle` — colours, shape, padding, durations — has neutral defaults; the
   app maps its design tokens onto it in one file of its own design system.
 - **Accessible and calm.** A placeholder is hidden from screen readers (the text under it is filler); the
@@ -55,9 +55,9 @@ If you have access to the author's knowledge repository (`github.com/Thernal/kno
 
 ```sh
 skillctl.sh kit install shimmer-kit --package com.example.app.core.designsystem \
-    --module :core:designsystem:shimmer --alias app            # the api and the sweep effect
+    --module :core:designsystem:shimmer --alias app            # api, impl, wiring and the sweep effect
 skillctl.sh kit install shimmer-kit … --with sweep,glow        # both effects
-skillctl.sh kit install shimmer-kit … --with none              # the api alone, an effect of the app's own
+skillctl.sh kit install shimmer-kit … --with none              # no effect module, an effect of the app's own
 ```
 
 The effects are **features** in [`kit.yml`](kit.yml): `sweep` is taken by default, `glow` when asked for. An
@@ -69,7 +69,7 @@ changes three ways, keeping the app's edits. The install prints what the app mus
 
 The same by hand, from a clone of this repository.
 
-1. **Copy** `shimmer/api` and the effects you want (`shimmer/sweep`, `shimmer/glow`) into the app, under the
+1. **Copy** `shimmer/api`, `shimmer/impl`, `shimmer/wiring` and the effects you want (`shimmer/sweep`, `shimmer/glow`) into the app, under the
    module path the app gives them: `shimmer/…` → `core/designsystem/shimmer/…`. Note the commit you copied
    (`git rev-parse HEAD`) — updates start from it.
 2. **Rename** in everything copied:
@@ -100,7 +100,9 @@ The same by hand, from a clone of this repository.
 
 | Module | Holds | Depends on |
 |---|---|---|
-| `shimmer/api` | `Modifier.shimmer`, `ShimmerLayout`, `ShimmerConfig`, `ShimmerHost`, `ShimmerClock`, `ShimmerStyle`, the `ShimmerEffect` contract and `PlainShimmerEffect`; the draw node | Compose |
+| `shimmer/api` | `Modifier.shimmer`, `ShimmerLayout`, `ShimmerConfig`, `ShimmerHost`, `ShimmerClock`, `ShimmerStyle`, the `ShimmerEffect` contract and `PlainShimmerEffect`, the two renderer contracts and what previews them | Compose |
+| `shimmer/impl` | the renderers: the host's cycle and reduce motion; the draw node, the fade, the clocks | api, Compose, animation-core |
+| `shimmer/wiring` | a Metro binding container contributing the renderers to `Set<ProvidedValue<*>>` | api, impl, Metro |
 | `shimmer/sweep` | `SweepShimmerEffect` — feature `sweep`, taken by default | api |
 | `shimmer/glow` | `GlowShimmerEffect` — feature `glow` | api |
 | `sample/shared`, `sample/android`, `sample/ios` | one screen: every effect and clock, a loading switch, and `sampleShimmerStyle` — the mapping an app writes in its own design system | the kit — never copied |

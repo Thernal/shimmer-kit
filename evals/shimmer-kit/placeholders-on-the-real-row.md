@@ -1,7 +1,7 @@
 # A loading list puts placeholders on its real rows
 
 Skill: shimmer-kit
-Fixture: an app with shimmer-kit installed (`ShimmerHost` at the root, `features = sweep`), and a `PeopleScreen`
+Fixture: an app with shimmer-kit installed (the renderers and `ShimmerHost` at the root, `features = sweep`), and a `PeopleScreen`
 whose state has `isLoading: Boolean` and `people: List<Person>`, drawing each person as a `PersonRow` (a round
 `Avatar` with `Modifier.clip(CircleShape)`, then a name `Text`).
 
