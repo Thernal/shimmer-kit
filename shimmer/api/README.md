@@ -1,8 +1,8 @@
 # Using shimmer-kit
 
 Packages: `io.thernal.shimmerkit.shimmer.api.presentation.*` (renamed in an app that took the kit), the effects
-in `….shimmer.sweep.presentation` and `….shimmer.glow.presentation`. A screen depends on `api` and names nothing
-else; `impl` and `wiring` are the root's.
+in `….shimmer.impl.presentation.effect.sweep` and `….effect.glow`. A screen depends on `api` and names nothing
+else; `impl` and `wiring` are the root's, and the root is where an effect is named.
 
 ## Which tool do I need
 
@@ -12,9 +12,7 @@ else; `impl` and `wiring` are the root's.
 | a screen's elements to be placeholders while it loads | `ShimmerLayout(isEnabled = isLoading) { … }` + `Modifier.shimmer()` on each element |
 | an icon or text to shimmer inside its own shape, still visible | `Modifier.shimmer { it.copy(isOverlay = true) }` |
 | a round placeholder for a round element | `Modifier.shimmer { it.copy(style = it.style?.copy(shape = CircleShape)) }` |
-| a wave down a list | `Modifier.shimmer { it.copy(clock = ShimmerClock.Staggered(index)) }` |
-| items that start shimmering as they appear | `clock = ShimmerClock.PerItem` |
-| another effect for one screen | `ShimmerLayout(config = ShimmerConfig(isEnabled = …, effect = GlowShimmerEffect()))` |
+| another effect or speed for one part of a screen | a `ShimmerHost(effect = …, style = …)` of its own around that part |
 | the app's colours and corners | a `ShimmerStyle` built from the app's tokens, given to `ShimmerHost` |
 | an effect of my own | a `data class` implementing `ShimmerEffect` |
 
@@ -42,8 +40,8 @@ CompositionLocalProvider(
 
 Without the renderers no placeholder is drawn outside a preview, and the elements show their filler.
 
-Compose the host once, above everything that shimmers. It runs the one cycle synced placeholders follow and gives
-every placeholder the effect and style its config does not name. With the renderers but no host, placeholders
+Compose the host once, above everything that shimmers. It runs the one cycle every placeholder follows, and gives
+them its effect and the style their config does not name. A placeholder follows the nearest host. With the renderers but no host, placeholders
 still draw — `PlainShimmerEffect`, the default style, standing still.
 
 `isAnimated = false` stands every placeholder still; so does the platform's reduce-motion setting, whatever
@@ -78,8 +76,8 @@ announcement in the app's words: `Modifier.semantics { contentDescription = stri
 
 ## One element, differently
 
-`Modifier.shimmer { config -> … }` gets the ambient config with the host's style and effect filled in, and
-returns the one this element uses:
+`Modifier.shimmer { config -> … }` gets the ambient config with the host's style filled in, and returns the one
+this element uses:
 
 ```kotlin
 Icon(modifier = Modifier.shimmer { it.copy(isOverlay = true) })                        // inside the icon's pixels
@@ -89,14 +87,6 @@ Text(modifier = Modifier.shimmer { it.copy(isEnabled = true) })                 
 
 The placeholder is clipped to the **style's** shape, not the element's own clip — a round element asks for a
 round shape.
-
-## Clocks
-
-| `ShimmerClock` | Progress | Animations |
-|---|---|---|
-| `Synced` (default) | the host's | one for the screen |
-| `Staggered(index, stepFraction = 0.08f)` | the host's, shifted by `index × stepFraction` of a cycle | one for the screen |
-| `PerItem` | its own, from when the element appears | one per element |
 
 ## The look
 
@@ -110,9 +100,11 @@ fun appShimmerStyle(): ShimmerStyle = ShimmerStyle(
 )
 ```
 
-`durationMillis` is the cycle (1600 by default) and `fadeOutMillis` the fade into the content (300).
+`durationMillis` is the cycle (1600 by default, the host's style sets it for everything below) and `fadeOutMillis` the fade into the content (300).
 
 ## Effects
+
+The effect is chosen on the host; a placeholder has no effect of its own.
 
 | Effect | Draws | Parameters |
 |---|---|---|

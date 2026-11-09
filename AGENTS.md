@@ -2,8 +2,8 @@
 
 shimmer-kit is a **kit**: reusable Compose Multiplatform code that applications copy — renamed into their own
 package — with `skillctl.sh kit install shimmer-kit` (the skill-manager skill, `Thernal/knowledge`), and later
-merge changes from with `kit update`. What they copy is listed in `kit.yml`: the modules `shimmer/api`, `shimmer/impl`, `shimmer/wiring`, and the effects `shimmer/sweep` and `shimmer/glow`, which
-are **features** an app takes or leaves by name.
+merge changes from with `kit update`. What they copy is listed in `kit.yml`: the modules `shimmer/api`, `shimmer/impl`, `shimmer/wiring`. The effects `sweep` and `glow` are directories inside
+`impl` and **features** an app takes or leaves by name.
 Everything committed to `main` reaches every app that takes the next update, so this file's first rule is
 about delivery.
 
@@ -30,23 +30,23 @@ about delivery.
   sample may use Material.
 - **Contracts in `api`, work in `impl`.** `ShimmerHost` and `Modifier.shimmer` are thin calls to a renderer from
   a CompositionLocal whose default previews them; `impl` implements `ShimmerHostRenderer` and `ShimmerRenderer`
-  (the transition, reduce motion, the draw node, the fade, the clocks); `wiring` contributes them
+  (the transition, reduce motion, the draw node, the fade); `wiring` contributes them
   (Metro `Set<ProvidedValue<*>>`) and holds binding containers only. Nothing in `api` imports `impl`.
-- **Features are referenced by nothing outside them.** `api`, `impl` and `wiring` never import an effect module,
-  an effect depends on `api` alone, and no effect imports another: an app that leaves one out must still build.
-  The api's own fallback (`PlainShimmerEffect`) is what a placeholder draws without any. A new effect is a new module under
-  `shimmer/`, a `feature:` line in `kit.yml` (not `default` — apps that never asked for it keep not having it),
+- **Features are referenced by nothing outside them.** Nothing in `api`, `wiring` or the rest of `impl` imports an
+  effect, an effect uses `api` alone, and no effect imports another: an app that leaves one out must still build.
+  The api's own fallback (`PlainShimmerEffect`) is what a placeholder draws without any. A new effect is a new directory
+  `presentation/effect/<name>` in `impl`'s `commonMain` and `commonTest`, a `feature:` line in `kit.yml` (not `default` — apps that never asked for it keep not having it),
   and `scripts/check-features.sh` proves it can be left out.
 - **An effect is a value** (`data class`/`data object`): the draw node re-prepares only when it changes. What
   depends on area, style and density is computed in `prepare`; `brushAt` runs every frame and stays
   arithmetic.
 - **Progress is read in draw, never in composition.** The node observes the progress `State` and invalidates
   draw; reading it in a composable would recompose the screen every frame.
-- **Clocks and behaviour switches are config, not features.** Synced, per-item and staggered progress add no
-  dependency, so they are `ShimmerClock` values in `api`, not modules.
+- **One cycle and one effect, the nearest host's.** A placeholder has no clock and no effect of its own: a design
+  system wants one loading motion. A part of a screen that really differs sits under a `ShimmerHost` of its own.
 - **The kit carries no copy.** No string reaches the user; announcing "loading" is the app's.
 - `api`/`impl` code lives in `presentation` packages (the kit's own Detekt rules); below it, packages are named
-  by part (`host`, `config`, `render`…). Effects live in their module's `presentation` package.
+  by part (`host`, `config`, `render`…). Effects live in `impl`, under `presentation/effect/<name>`.
 - Kotlin nests block comments: never write `/*` inside KDoc.
 - Every module that changes what apps copy updates `kit.yml` in the same change: `code`, `feature`,
   `surface`, `requires`.
@@ -74,7 +74,7 @@ bumped (`scripts/check-corpus.py --kits` says so).
 
 ## The sample
 
-`sample/` shows every effect and clock on Android and iOS and is never copied into apps.
+`sample/` shows every effect on Android and iOS and is never copied into apps.
 `sampleShimmerStyle` is how an app's design system feeds the placeholders — keep every look the kit draws
 reachable from `ShimmerStyle` or an effect's parameters; a value hard-coded in a module is a look no app can
 change. A sample that builds is not one that starts: after changing it, build the iOS app with `xcodebuild`

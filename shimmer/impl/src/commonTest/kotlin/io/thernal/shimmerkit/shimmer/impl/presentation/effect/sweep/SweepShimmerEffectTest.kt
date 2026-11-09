@@ -1,4 +1,4 @@
-package io.thernal.shimmerkit.shimmer.sweep.presentation
+package io.thernal.shimmerkit.shimmer.impl.presentation.effect.sweep
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size

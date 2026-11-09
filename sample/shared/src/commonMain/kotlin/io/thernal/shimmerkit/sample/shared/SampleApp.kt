@@ -28,8 +28,8 @@ import io.thernal.shimmerkit.shimmer.api.presentation.config.ShimmerLayout
 import io.thernal.shimmerkit.shimmer.api.presentation.effect.PlainShimmerEffect
 import io.thernal.shimmerkit.shimmer.api.presentation.effect.ShimmerEffect
 import io.thernal.shimmerkit.shimmer.api.presentation.host.ShimmerHost
-import io.thernal.shimmerkit.shimmer.glow.presentation.GlowShimmerEffect
-import io.thernal.shimmerkit.shimmer.sweep.presentation.SweepShimmerEffect
+import io.thernal.shimmerkit.shimmer.impl.presentation.effect.glow.GlowShimmerEffect
+import io.thernal.shimmerkit.shimmer.impl.presentation.effect.sweep.SweepShimmerEffect
 
 /**
  * The sample's root, as an application's root would be: the graph's composition locals installed in one spread
@@ -64,7 +64,6 @@ private fun SampleScreen(
     onEffect: (SampleEffect) -> Unit,
 ) {
     var isLoading by remember { mutableStateOf(true) }
-    var clock by remember { mutableStateOf(SampleClock.Synced) }
 
     Column(
         modifier = Modifier
@@ -95,16 +94,9 @@ private fun SampleScreen(
             name = { it.label },
             onSelect = onEffect,
         )
-        ChoiceRow(
-            label = "Clock",
-            choices = SampleClock.entries,
-            selected = clock,
-            name = { it.label },
-            onSelect = { clock = it },
-        )
         ShimmerLayout(config = ShimmerConfig(isEnabled = isLoading)) {
             Column(verticalArrangement = Arrangement.spacedBy(space = 16.dp)) {
-                SampleSections(clock = clock)
+                SampleSections()
             }
         }
     }

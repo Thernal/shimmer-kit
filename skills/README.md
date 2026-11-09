@@ -5,4 +5,4 @@ Skills for AI coding agents working in projects that **use** shimmer-kit, in the
 
 | Skill | Use it when |
 |---|---|
-| [`shimmer-kit`](shimmer-kit/SKILL.md) | loading placeholders and skeletons; the root host, styles from the app's tokens; clocks; the sweep and glow effects or one of the app's own |
+| [`shimmer-kit`](shimmer-kit/SKILL.md) | loading placeholders and skeletons; the root host, styles from the app's tokens; the sweep and glow effects or one of the app's own |

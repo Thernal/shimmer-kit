@@ -21,7 +21,7 @@ data class ShimmerStyle(
     val shape: Shape = ShimmerDefaults.Shape,
     /** Inset from the element's bounds, so neighbouring placeholders do not touch. */
     val padding: Dp = ShimmerDefaults.Padding,
-    /** One cycle of the effect. */
+    /** One cycle of the effect: the host's style sets it, for every placeholder below. */
     val durationMillis: Int = ShimmerDefaults.DURATION_MILLIS,
     /** How long the placeholder takes to fade into the real content once loading ends. */
     val fadeOutMillis: Int = ShimmerDefaults.FADE_OUT_MILLIS,

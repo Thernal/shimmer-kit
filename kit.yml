@@ -16,20 +16,18 @@ code:
   - shimmer/api
   - shimmer/impl
   - shimmer/wiring
-  - shimmer/sweep
-  - shimmer/glow
 
-# What an app takes by name (`kit install … --with sweep,glow`, later `kit select`). api, impl and wiring
-# are always taken and draw a plain fill on their own, so an app may take no effect and write its own.
+# What an app takes by name (`kit install … --with sweep,glow`, later `kit select`). Each effect is a directory
+# inside `impl`, its code and its tests. api, impl and wiring are always taken and draw a plain fill on their own,
+# so an app may take no effect and write its own.
 feature:
-  - sweep  shimmer/sweep  default — a tilted highlight band travelling across the placeholder
-  - glow   shimmer/glow — a soft highlight breathing out from the placeholder's centre
+  - sweep  shimmer/impl/src/commonMain/kotlin/io/thernal/shimmerkit/shimmer/impl/presentation/effect/sweep,shimmer/impl/src/commonTest/kotlin/io/thernal/shimmerkit/shimmer/impl/presentation/effect/sweep  default — a tilted highlight band travelling across the placeholder
+  - glow   shimmer/impl/src/commonMain/kotlin/io/thernal/shimmerkit/shimmer/impl/presentation/effect/glow,shimmer/impl/src/commonTest/kotlin/io/thernal/shimmerkit/shimmer/impl/presentation/effect/glow — a soft highlight breathing out from the placeholder's centre
 
 # The public contract — its source, not its README.
 surface:
   - shimmer/api/src
-  - shimmer/sweep/src/commonMain
-  - shimmer/glow/src/commonMain
+  - shimmer/impl/src/commonMain/kotlin/io/thernal/shimmerkit/shimmer/impl/presentation/effect
 
 # Installed into the application's skills directory, renamed like the code.
 skill:
@@ -54,5 +52,5 @@ requires:
   - root the app's root composes ShimmerHost(effect = …, style = …) once, above everything that shimmers — it drives the one synced sweep and hands every placeholder its effect and look
   - styles the app maps its design system's tokens onto ShimmerStyle in one file of its own design-system module; the kit's defaults are neutral fallbacks for previews and tests, and kit code is never edited to restyle
   - [sweep] the root passes SweepShimmerEffect() (or one with its own band) as ShimmerHost's effect
-  - [glow] the root, or a ShimmerLayout around one screen, passes GlowShimmerEffect()
+  - [glow] the root, or a ShimmerHost of its own around one part of a screen, passes GlowShimmerEffect()
   - settings enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS"), and each code part included as a module

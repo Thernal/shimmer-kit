@@ -25,9 +25,6 @@ import io.thernal.shimmerkit.shimmer.api.presentation.style.ShimmerStyle
 /** The host's cycle. Without a host it stands still, half-way — the look a preview gets. */
 internal val LocalShimmerProgress = staticCompositionLocalOf<State<Float>> { mutableFloatStateOf(STILL_PROGRESS) }
 
-/** False when the host stands still (reduce motion, previews): a per-item clock then stands still too. */
-internal val LocalShimmerAnimated = staticCompositionLocalOf { true }
-
 /** Where a still placeholder sits in its cycle. */
 internal const val STILL_PROGRESS = 0.5f
 
@@ -47,8 +44,7 @@ class ShimmerHostRendererImpl : ShimmerHostRenderer {
         }
 
         CompositionLocalProvider(
-            LocalShimmerProgress provides progress,
-            LocalShimmerAnimated provides isMoving,
+            value = LocalShimmerProgress provides progress,
             content = content,
         )
     }

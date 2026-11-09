@@ -16,7 +16,7 @@ import io.thernal.shimmerkit.shimmer.api.presentation.style.ShimmerStyle
 
 /**
  * Turns one element into a placeholder. `impl` owns the draw node, the fade and the clocks; `api` exposes only
- * the [shimmer] modifier below. [style] and [effect] are already resolved: the config's own, or the host's.
+ * the [shimmer] modifier below. [style] is already resolved: the config's own, or the host's.
  */
 interface ShimmerRenderer {
     @Composable
@@ -66,13 +66,15 @@ private object PreviewShimmerRenderer : ShimmerRenderer {
 
 /**
  * Makes this element a placeholder while the ambient `ShimmerLayout` is loading — or while [overrides]
- * says so. [overrides] gets the ambient config with the host's style and effect filled in:
+ * says so. [overrides] gets the ambient config with the host's style filled in:
  *
  * ```
- * Modifier.shimmer()                                                 // the layout's config as it is
- * Modifier.shimmer { it.copy(isOverlay = true) }                     // shimmer inside an icon's own pixels
- * Modifier.shimmer { it.copy(clock = ShimmerClock.Staggered(index)) } // a wave down a list
+ * Modifier.shimmer()                                                  // the layout's config as it is
+ * Modifier.shimmer { it.copy(isOverlay = true) }                      // shimmer inside an icon's own pixels
+ * Modifier.shimmer { it.copy(style = it.style?.copy(shape = CircleShape)) } // a round element
  * ```
+ *
+ * Every placeholder follows the nearest host: its effect and its one cycle.
  *
  * While it is a placeholder its content is hidden from screen readers too — the text under a placeholder
  * is filler. Say "loading" once, on the container, in the app's own words.
@@ -81,17 +83,13 @@ fun Modifier.shimmer(overrides: @Composable (ShimmerConfig) -> ShimmerConfig = {
     return composed {
         val ambient = LocalShimmerConfig.current
         val hostStyle = LocalShimmerStyle.current
-        val hostEffect = LocalShimmerEffect.current
         val config = overrides(
-            ambient.copy(
-                style = ambient.style ?: hostStyle,
-                effect = ambient.effect ?: hostEffect,
-            ),
+            ambient.copy(style = ambient.style ?: hostStyle),
         )
         LocalShimmerRenderer.current.rememberModifier(
             config = config,
             style = config.style ?: hostStyle,
-            effect = config.effect ?: hostEffect,
+            effect = LocalShimmerEffect.current,
         )
     }
 }

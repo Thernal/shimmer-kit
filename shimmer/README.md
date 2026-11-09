@@ -5,10 +5,10 @@
 A screen names `api` alone: `ShimmerHost`, `ShimmerLayout`, `ShimmerConfig`, the style, clock and effect values,
 and `Modifier.shimmer`. The two composable entries are thin calls to a renderer from a CompositionLocal —
 `ShimmerHostRenderer`, `ShimmerRenderer` — the shape overlay-kit, paging-kit and nav-kit have. `impl` holds the
-work: the transition, reduce motion, the draw node, the fade and the clocks. `wiring` contributes the renderers
+work: the transition, reduce motion, the draw node and the fade. `wiring` contributes the renderers
 to the graph's `Set<ProvidedValue<*>>`; `api` and `impl` name no injection framework, so an app without Metro
-provides the two locals by hand. An effect depends on `api` only: it is a brush, and knows nothing of the node
-that paints it.
+provides the two locals by hand. An effect lives in `impl` and uses `api` only: it is a brush, and knows nothing
+of the node that paints it.
 
 A renderer's default previews it. In a preview a placeholder is a still fill in the base colour and the host
 just shows its content. Outside a preview, a missing installation changes nothing about the element: the filler
@@ -26,20 +26,17 @@ model); its sizes are what the placeholder takes.
 So the placeholder hides its content's semantics too: a screen reader would otherwise read the filler.
 Announcing "loading" once is the app's job, in its own words — the kit carries no string.
 
-## One cycle, chosen per element
+## One cycle, the nearest host's
 
 Placeholders that each animate on their own drift apart and look restless; a list should move as one. The
-host runs a single infinite transition and every synced placeholder reads it, so a screen of fifty
-placeholders is one animation. Two other clocks are values, not modules — they add no dependency:
+host runs a single infinite transition and every placeholder reads it, so a screen of fifty placeholders is
+one animation.
 
-- `Staggered(index)` shifts the host's progress by `index × step`: a wave rolling down a list, still one
-  animation.
-- `PerItem` starts a transition of the element's own when it appears — for content that arrives piece by
-  piece, where a shared phase would look wrong.
-
-Act2Act chose between "global" and "own" implicitly: a placeholder whose duration or delay differed from the
-default silently got a transition of its own. Changing a speed therefore also broke the sync, with nothing at
-the call site to say so. The clock is now explicit; the duration is the style's.
+There are no per-element clocks. Act2Act chose between "global" and "own" implicitly: a placeholder whose
+duration or delay differed from the default silently got a transition of its own. An early version of this
+kit made that explicit, with synced, per-item and staggered clocks, and removed it: a design system wants one
+loading motion, and a clock on every element is a choice every call site can make differently. A part of a
+screen that really needs another speed or effect sits under a `ShimmerHost` of its own and follows that one.
 
 ## The effect is a value behind a contract
 
@@ -54,8 +51,10 @@ the config every call site carries. Now `ShimmerEffect` is the seam:
 - Effects are `data class`es: equal effects are not re-prepared, and an effect's parameters live on the effect
   (`SweepShimmerEffect(widthFraction, tiltDegrees, sharpness)`), not on every placeholder's config.
 
-Each effect is its own module and a **feature** in `kit.yml`: an app takes `sweep` (the default), `glow`, both,
-or neither. The api never names an effect, so leaving one out cannot break the build, and
+An effect is chosen on the host, not per element, and each is a directory inside `impl` and a **feature** in
+`kit.yml`: an app takes `sweep` (the default), `glow`, both, or neither. A feature does not have to be a module:
+these are two small files with no dependency of their own, and skill-manager leaves a directory out as readily as
+a module. Nothing else in the kit names an effect, so leaving one out cannot break the build, and
 `scripts/check-features.sh` proves it. Without any effect, `PlainShimmerEffect` — the base colour, still — is
 what placeholders draw.
 
@@ -70,7 +69,7 @@ kit cannot, so the app maps its tokens onto `ShimmerStyle` in one file of its ow
 `ShimmerHost(isAnimated = false)` stands every placeholder still — the style's colours at mid-cycle — and so does
 the platform, whatever `isAnimated` says: iOS's Reduce Motion, Android's "Remove animations" (animator scale 0).
 The platform's setting is read in `impl`, and the app has no way to overrule it: a user who asked for less motion
-is not an app's to argue with. A still host also stands per-item clocks still.
+is not an app's to argue with.
 
 ## What changed from Act2Act
 
@@ -80,8 +79,7 @@ is not an app's to argue with. A still host also stands per-item clocks still.
 | `ShimmerDefaults` read `DsTheme` | `ShimmerStyle`, mapped by the app |
 | band width, tilt, sharpness, colours, timings on `ShimmerConfig` | effect parameters on `SweepShimmerEffect`; colours and timings on `ShimmerStyle` |
 | `asOverlay` | `isOverlay` |
-| own transition when duration or delay differed | `clock = ShimmerClock.PerItem`, explicitly; `Staggered` added |
-| per-element `delayMillis` | `ShimmerClock.Staggered(index, stepFraction)` |
+| own transition when duration or delay differed; per-element `delayMillis` | gone: every placeholder follows the nearest host, and a differing part has a host of its own |
 | the sweep only | the `ShimmerEffect` contract; `sweep` and `glow` as features, `PlainShimmerEffect` without either |
 | the band always left to right | the band follows the layout direction |
 | semantics of the filler kept | hidden while loading |

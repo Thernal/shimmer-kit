@@ -11,8 +11,8 @@ import androidx.compose.ui.unit.LayoutDirection
 import io.thernal.shimmerkit.shimmer.api.presentation.style.ShimmerStyle
 
 /**
- * What a placeholder is painted with. The kit's own effects are features an app takes or leaves
- * (`SweepShimmerEffect`, `GlowShimmerEffect`); an app may write one of its own.
+ * What a placeholder is painted with, chosen on `ShimmerHost`. The kit's own effects are features of `impl` an
+ * app takes or leaves (`SweepShimmerEffect`, `GlowShimmerEffect`); an app may write one of its own.
  *
  * An effect is a value: make it a `data class` or a `data object`. Placeholders keep what [prepare]
  * returned until the effect, the style, the area or the density changes — equal effects are not

@@ -17,12 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import io.thernal.shimmerkit.shimmer.api.presentation.clock.ShimmerClock
 import io.thernal.shimmerkit.shimmer.api.presentation.modifier.shimmer
 
 /** A card's image, a list of rows and a line of icons — every one a placeholder while the layout loads. */
 @Composable
-internal fun SampleSections(clock: SampleClock) {
+internal fun SampleSections() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -34,10 +33,7 @@ internal fun SampleSections(clock: SampleClock) {
         Text(text = "An image")
     }
     repeat(times = ROWS) { index ->
-        SampleRow(
-            index = index,
-            clock = clock,
-        )
+        SampleRow(index = index)
     }
     Row(horizontalArrangement = Arrangement.spacedBy(space = 12.dp)) {
         repeat(times = ICONS) {
@@ -54,15 +50,7 @@ internal fun SampleSections(clock: SampleClock) {
 }
 
 @Composable
-private fun SampleRow(
-    index: Int,
-    clock: SampleClock,
-) {
-    val rowClock = when (clock) {
-        SampleClock.Synced -> ShimmerClock.Synced
-        SampleClock.PerItem -> ShimmerClock.PerItem
-        SampleClock.Staggered -> ShimmerClock.Staggered(index = index)
-    }
+private fun SampleRow(index: Int) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(space = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -71,24 +59,19 @@ private fun SampleRow(
         Box(
             modifier = Modifier
                 .size(size = 44.dp)
-                .shimmer { config ->
-                    config.copy(
-                        clock = rowClock,
-                        style = config.style?.copy(shape = CircleShape),
-                    )
-                }
+                .shimmer { config -> config.copy(style = config.style?.copy(shape = CircleShape)) }
                 .clip(shape = CircleShape)
                 .background(color = MaterialTheme.colorScheme.secondary),
         )
         Column(verticalArrangement = Arrangement.spacedBy(space = 4.dp)) {
             Text(
                 text = "Person number ${index + 1}",
-                modifier = Modifier.shimmer { config -> config.copy(clock = rowClock) },
+                modifier = Modifier.shimmer(),
                 style = MaterialTheme.typography.bodyLarge,
             )
             Text(
                 text = "Joined a while ago",
-                modifier = Modifier.shimmer { config -> config.copy(clock = rowClock) },
+                modifier = Modifier.shimmer(),
                 style = MaterialTheme.typography.bodySmall,
             )
         }

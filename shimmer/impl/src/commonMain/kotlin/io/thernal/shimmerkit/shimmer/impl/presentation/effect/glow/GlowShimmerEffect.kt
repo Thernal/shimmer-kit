@@ -1,4 +1,4 @@
-package io.thernal.shimmerkit.shimmer.glow.presentation
+package io.thernal.shimmerkit.shimmer.impl.presentation.effect.glow
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.geometry.Offset

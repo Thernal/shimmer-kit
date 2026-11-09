@@ -41,8 +41,8 @@ private object PreviewShimmerHostRenderer : ShimmerHostRenderer {
 
 /**
  * The root of everything that shimmers: one cycle every synced placeholder follows, and the [effect] and
- * [style] placeholders take when their config names none. Compose it once, near the app's root; a
- * `ShimmerLayout` below changes either for one screen.
+ * [style] placeholders take when their config names none. Compose it once, near the app's root; a part of
+ * the screen that needs another effect or speed sits under a host of its own, and follows that one.
  *
  * [isAnimated] false stands every placeholder still in the style's colours. The platform's reduce-motion
  * setting stands them still too, whatever this says.

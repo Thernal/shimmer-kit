@@ -19,9 +19,8 @@ ShimmerLayout(isEnabled = state.isLoading) {
 
 - **The real layout is the placeholder.** No second skeleton composable to keep in step with the screen: the
   elements themselves are hidden behind the effect while loading and fade in when it ends.
-- **One cycle for the screen.** Every placeholder follows the host's single animation by default, so a list
-  of rows moves as one. Per element, a `ShimmerClock` chooses otherwise: `PerItem` (each its own wave, from
-  when it appears) or `Staggered(index)` (the host's cycle shifted along a list — still one animation).
+- **One cycle for the screen.** Every placeholder follows the nearest host's single animation, so a list of
+  rows moves as one. A part of a screen that needs another speed or effect sits under a host of its own.
 - **The effect is a value.** `SweepShimmerEffect` (a tilted band travelling across) and `GlowShimmerEffect`
   (a highlight breathing from the centre) are the kit's; an app may write its own `ShimmerEffect`. Without
   any, placeholders are a still fill in the base colour; in a preview that holds with `impl` not installed either.
@@ -38,7 +37,7 @@ Ported from Act2Act's design-system shimmer (`shimmer/README.md` says what chang
 
 | Read | For |
 |---|---|
-| [`shimmer/api/README.md`](shimmer/api/README.md) | using it, task by task: the host, layouts, overlays on icons, clocks, styles, an effect of your own, previews |
+| [`shimmer/api/README.md`](shimmer/api/README.md) | using it, task by task: the host, layouts, overlays on icons, styles, an effect of your own, previews |
 | [`shimmer/README.md`](shimmer/README.md) | why each part has its shape, and what changed from Act2Act |
 | [`docs/todos/`](docs/todos) | open questions |
 | [`skills/shimmer-kit`](skills/shimmer-kit/SKILL.md) | the same for an agent in an app that took the kit |
@@ -60,8 +59,8 @@ skillctl.sh kit install shimmer-kit … --with sweep,glow        # both effects
 skillctl.sh kit install shimmer-kit … --with none              # no effect module, an effect of the app's own
 ```
 
-The effects are **features** in [`kit.yml`](kit.yml): `sweep` is taken by default, `glow` when asked for. An
-effect not taken is never copied, and stays out on every update; `kit select shimmer-kit --with glow` takes
+The effects are **features** in [`kit.yml`](kit.yml), each a directory inside `impl`: `sweep` is taken by default,
+`glow` when asked for. An effect not taken is never copied, and stays out on every update; `kit select shimmer-kit --with glow` takes
 it later. `kit status` shows what changed upstream and what the app edited; `kit update` merges the kit's
 changes three ways, keeping the app's edits. The install prints what the app must provide (`requires`).
 
@@ -69,7 +68,7 @@ changes three ways, keeping the app's edits. The install prints what the app mus
 
 The same by hand, from a clone of this repository.
 
-1. **Copy** `shimmer/api`, `shimmer/impl`, `shimmer/wiring` and the effects you want (`shimmer/sweep`, `shimmer/glow`) into the app, under the
+1. **Copy** `shimmer/api`, `shimmer/impl` and `shimmer/wiring`, without the `presentation/effect/<name>` directories (main and test) of the effects you do not want, into the app, under the
    module path the app gives them: `shimmer/…` → `core/designsystem/shimmer/…`. Note the commit you copied
    (`git rev-parse HEAD`) — updates start from it.
 2. **Rename** in everything copied:
@@ -100,12 +99,10 @@ The same by hand, from a clone of this repository.
 
 | Module | Holds | Depends on |
 |---|---|---|
-| `shimmer/api` | `Modifier.shimmer`, `ShimmerLayout`, `ShimmerConfig`, `ShimmerHost`, `ShimmerClock`, `ShimmerStyle`, the `ShimmerEffect` contract and `PlainShimmerEffect`, the two renderer contracts and what previews them | Compose |
-| `shimmer/impl` | the renderers: the host's cycle and reduce motion; the draw node, the fade, the clocks | api, Compose, animation-core |
+| `shimmer/api` | `Modifier.shimmer`, `ShimmerLayout`, `ShimmerConfig`, `ShimmerHost`, `ShimmerStyle`, the `ShimmerEffect` contract and `PlainShimmerEffect`, the two renderer contracts and what previews them | Compose |
+| `shimmer/impl` | the renderers: the host's cycle and reduce motion; the draw node, the fade. `SweepShimmerEffect` (feature `sweep`, taken by default) and `GlowShimmerEffect` (feature `glow`) | api, Compose, animation-core |
 | `shimmer/wiring` | a Metro binding container contributing the renderers to `Set<ProvidedValue<*>>` | api, impl, Metro |
-| `shimmer/sweep` | `SweepShimmerEffect` — feature `sweep`, taken by default | api |
-| `shimmer/glow` | `GlowShimmerEffect` — feature `glow` | api |
-| `sample/shared`, `sample/android`, `sample/ios` | one screen: every effect and clock, a loading switch, and `sampleShimmerStyle` — the mapping an app writes in its own design system | the kit — never copied |
+| `sample/shared`, `sample/android`, `sample/ios` | one screen: every effect, a loading switch, and `sampleShimmerStyle` — the mapping an app writes in its own design system | the kit — never copied |
 
 ## Building
 
@@ -115,8 +112,8 @@ scripts/check-features.sh        # the build again with each feature left out, a
 ```
 
 Detekt fails on any finding (`-PdetektAutoCorrect=true` fixes formatting first). Building for iOS needs
-Xcode, not only its command-line tools. `-Pkit.without=sweep,glow` leaves those modules (and the sample)
-out of the build; `scripts/check-features.sh` runs it for each feature in `kit.yml`.
+Xcode, not only its command-line tools. `scripts/check-features.sh` moves each feature's directories aside and
+builds what an app copies, for each feature in `kit.yml`.
 
 The iOS sample is an Xcode project (`sample/ios/Sample.xcodeproj`, generated from `project.yml` by
 XcodeGen); its build phase compiles the framework with Gradle:

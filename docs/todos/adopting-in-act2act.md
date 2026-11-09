@@ -7,6 +7,6 @@ onto the kit (`kit install shimmer-kit --adopt` after aligning names, or a fresh
   the renderers `shimmer/wiring` contributes joining the app's `Set<ProvidedValue<*>>` above it.
 - `ShimmerDefaults` (`DsTheme.colors.background04/02`, `rounding.r16`, `dimens.dp1`) → one `ShimmerStyle` in the
   design system.
-- `asOverlay` → `isOverlay`; custom `durationMillis`/`delayMillis` on a config (the splash) → `clock =
-  ShimmerClock.PerItem` with a style of its own duration.
+- `asOverlay` → `isOverlay`; custom `durationMillis` on a config (the splash) → a `ShimmerHost` of its own with a style
+  of that duration. `delayMillis` has no replacement.
 - `grep -rn -e 'asOverlay' -e 'ShimmerProgressProvider' -e 'shimmer.config.ShimmerDefaults' .` finds the call sites.

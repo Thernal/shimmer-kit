@@ -1,8 +1,6 @@
 package io.thernal.shimmerkit.shimmer.api.presentation.config
 
 import androidx.compose.runtime.Immutable
-import io.thernal.shimmerkit.shimmer.api.presentation.clock.ShimmerClock
-import io.thernal.shimmerkit.shimmer.api.presentation.effect.ShimmerEffect
 import io.thernal.shimmerkit.shimmer.api.presentation.style.ShimmerStyle
 
 /**
@@ -18,9 +16,6 @@ data class ShimmerConfig(
      * shape, and the content is hidden.
      */
     val isOverlay: Boolean = false,
-    val clock: ShimmerClock = ShimmerClock.Synced,
     /** The look; null takes the host's. */
     val style: ShimmerStyle? = null,
-    /** The effect; null takes the host's. */
-    val effect: ShimmerEffect? = null,
 )

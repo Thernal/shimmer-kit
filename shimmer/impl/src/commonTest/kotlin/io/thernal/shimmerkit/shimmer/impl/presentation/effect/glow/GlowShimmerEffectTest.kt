@@ -1,4 +1,4 @@
-package io.thernal.shimmerkit.shimmer.glow.presentation
+package io.thernal.shimmerkit.shimmer.impl.presentation.effect.glow
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
