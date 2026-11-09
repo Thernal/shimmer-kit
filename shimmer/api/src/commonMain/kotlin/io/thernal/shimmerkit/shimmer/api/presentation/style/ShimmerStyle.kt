@@ -19,7 +19,7 @@ data class ShimmerStyle(
     val highlightColor: Color = ShimmerDefaults.HighlightColor,
     /** The placeholder's outline; the effect is clipped to it. */
     val shape: Shape = ShimmerDefaults.Shape,
-    /** Inset from the element's bounds, so neighbouring placeholders do not touch. */
+    /** Inset from the element's bounds, so neighbouring placeholders do not touch. An overlay ignores it. */
     val padding: Dp = ShimmerDefaults.Padding,
     /** One cycle of the effect: the host's style sets it, for every placeholder below. */
     val durationMillis: Int = ShimmerDefaults.DURATION_MILLIS,

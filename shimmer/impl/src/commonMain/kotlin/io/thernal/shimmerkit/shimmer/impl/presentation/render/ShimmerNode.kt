@@ -74,7 +74,7 @@ internal class ShimmerNode(
         style: ShimmerStyle,
         effect: ShimmerEffect,
     ) {
-        if (this.style != style || this.effect != effect) {
+        if (this.style != style || this.effect != effect || this.isOverlay != isOverlay) {
             cache = null
         }
         this.state = state
@@ -182,7 +182,12 @@ internal class ShimmerNode(
         }
         val area = insetArea(
             size = size,
-            paddingPx = style.padding.toPx(),
+            // An overlay paints the element's own pixels: inset, their edge would keep its own colour.
+            paddingPx = if (isOverlay) {
+                0f
+            } else {
+                style.padding.toPx()
+            },
         )
         val fresh = Cache(
             size = size,
